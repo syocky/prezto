@@ -11,3 +11,245 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
 fi
 
 # Customize to your needs...
+#-----------------------------------------------------------------
+# シェル変数設定
+#-----------------------------------------------------------------
+#
+### ディレクトリ ###
+#
+# ディレクトリスタックに最大で記憶できるディレクトリの個数
+DIRSTACKSIZE=32
+# ディレクトリ名だけで cd する
+setopt auto_cd
+# ディレクトリ移動時にディレクトリスタックに元いたディレクトリを追加
+setopt auto_pushd
+# ディレクトリスタックに同じものを追加しない
+setopt pushd_ignore_dups
+#
+### ヒストリ ###
+#
+# メモリ内に記憶しておくヒストリの最大イベント数
+HISTSIZE=10000
+# ヒストリの保存先ファイル
+HISTFILE="${ZDOTDIR:-$HOME}/.zsh_history"
+# ヒストリファイルに保存する際に、コマンド入力時間と実行時間を合わせて保存する
+setopt extended_history
+# ヒストリに追加するときに、既に同一のコマンドがあればそれを削除する
+setopt hist_ignore_all_dups
+# 直前のコマンドと同一のコマンドは、ヒストリに追加しない
+setopt hist_ignore_dups
+# 先頭にスペースを入れたコマンドはヒストリに追加しない
+# いったんは保存されるが、次のコマンド入力で消去される
+setopt hist_ignore_space
+# ヒストリ参照コマンド（history, fc -l）はヒストリに追加しない
+setopt hist_no_store
+# コマンド中にある余分な空白は削除してヒストリに追加する
+setopt hist_reduce_blanks
+# ヒストリファイルに保存するときに重複したコマンドは古い方を削除する
+setopt hist_save_no_dups
+# ヒストリ展開を利用した場合、すぐに実行せずに、マッチしたものをいったん表示する
+setopt hist_verify
+# 入力したコマンドをすぐにヒストリファイルに追加する
+setopt inc_append_history
+#
+### プロンプト
+#
+# PROMPT変数に対して変数展開、コマンド置換、算術展開を施す
+setopt prompt_subst
+# 候補一覧は出力した後、新しくプロンプトを出さずに元のプロンプトに留まる
+setopt always_last_prompt
+#
+### 補完 ###
+# カーソル位置を保ち、そこに*を補ったかのようにして、先頭＋末尾両方を見て補完
+setopt complete_in_word
+# 候補が複数あるときに自動的に一覧を出力
+setopt auto_list
+# 候補が複数あるときに補完キー錬だで自動的にメニュー補完に移行
+setopt auto_menu
+# 次の入力文字が":", "}"など変数名の直後に来るべき文字であるときに自動的に削除する
+setopt auto_param_keys
+# 変数名補完時に、その値がディレクトリ名なら直後にスラッシュを補う
+setopt auto_param_slash
+# ディレクトリを補完したときに自動的に付くスラッシュを、その次の入力文字がデリミタであるときに削除する
+setopt auto_remove_slash
+# 補完時に、コマンドのエイリアスを内部的に置き換えることをしない
+setopt complete_aliases
+# 一覧の行数をなるべく少なくする
+setopt list_packed
+# 候補一覧のファイル名の末尾にファイル種別を表す記号を付ける
+setopt list_types
+# = 以降でも補完できるようにする( --prefix=/usr 等の場合)
+setopt magic_equal_subst
+# 補完候補リストの日本語を正しく表示
+setopt print_eight_bit
+# 拡張グロブで補完
+setopt extended_glob
+#
+### その他 ###
+#
+# ビープ音を消す
+setopt no_beep
+# ログアウト時にバックグラウンドジョブをkillしない
+setopt no_hup
+# ログアウト時にバックグラウンドジョブを確認しない
+setopt no_checkjobs
+# バックグラウンドジョブが終了したら(プロンプトの表示を待たずにすぐに知らせる
+setopt notify
+# rm * を実行する前に確認しない
+setopt rm_star_silent
+# リダイレクトで上書きを許可
+unsetopt no_clobber
+# C-s/C-qによるフロー制御をOFF
+unsetopt flowcontrol
+# バージョンチェック有効
+autoload -Uz is-at-least
+
+#-----------------------------------------------------------------
+# ローカル設定
+#-----------------------------------------------------------------
+if [ -f "${ZDOTDIR:-$HOME}/.zshrc_local" ]; then
+  source "${ZDOTDIR:-$HOME}/.zshrc_local"
+fi
+
+#-----------------------------------------------------------------
+# キーバインド設定
+#-----------------------------------------------------------------
+# viライクキーバインド
+bindkey -v
+# コマンド履歴の検索機能の設定
+autoload history-search-end
+zle -N history-beginning-search-backward-end history-search-end
+zle -N history-beginning-search-forward-end history-search-end
+bindkey '^p' history-beginning-search-backward-end
+bindkey '^n' history-beginning-search-forward-end
+# インクリメンタルサーチの設定
+bindkey '^r' history-incremental-search-backward
+bindkey '^s' history-incremental-search-forward
+
+# 略語展開
+typeset -A abbreviations
+abbreviations=(
+  "A"   "| awk"
+  "C"   "| cat"
+  "DE"  "2>&1 > /dev/null"
+  "DN"  "> /dev/null"
+  "G"   "| grep"
+  "P"   "| peco"
+  "S"   "| sed"
+  "T"   "| tail"
+  "TC"  "tar -czvf"
+  "TX"  "tar -xzvf"
+  "X"   "| xargs"
+  "W"   "| wc"
+)
+
+magic-abbrev-expand() {
+  local MATCH
+  LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
+  LBUFFER+=${abbreviations[$MATCH]:-$MATCH}
+  zle self-insert
+}
+
+no-magic-abbrev-expand() {
+  LBUFFER+=' '
+}
+
+zle -N magic-abbrev-expand
+zle -N no-magic-abbrev-expand
+bindkey " " magic-abbrev-expand
+bindkey "^x " no-magic-abbrev-expand
+
+#-----------------------------------------------------------------
+# プラグイン設定
+#-----------------------------------------------------------------
+# peco
+if [ -x "`which peco`" ]; then
+  #
+  # コマンド履歴
+  #
+  function peco-select-history() {
+    local tac
+    if which tac > /dev/null; then
+      tac="tac"
+    else
+      tac="tail -r"
+    fi
+    BUFFER=$(\history -n 1 | \
+      eval $tac | \
+      peco --query "$LBUFFER")
+    CURSOR=$#BUFFER
+    zle clear-screen
+  }
+  zle -N peco-select-history
+  bindkey '^p^r' peco-select-history
+  #
+  # ディレクトリ履歴
+  #
+  if is-at-least 4.3.11
+  then
+    autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
+    add-zsh-hook chpwd chpwd_recent_dirs
+    zstyle ':chpwd:*' recent-dirs-max 5000
+    zstyle ':chpwd:*' recent-dirs-default yes
+    zstyle ':completion:*' recent-dirs-insert both
+  fi
+  function peco-cdr () {
+      local selected_dir=$(cdr -l | awk '{ print $2 }' | peco)
+      if [ -n "$selected_dir" ]; then
+          BUFFER="cd ${selected_dir}"
+          zle accept-line
+      fi
+      zle clear-screen
+  }
+  zle -N peco-cdr
+  bindkey '^p^j' peco-cdr
+  #
+  # プロセスKill
+  #
+  function peco-kill-process () {
+    ps -ef | peco | awk '{ print $2 }' | xargs kill
+    zle clear-screen
+  }
+  zle -N peco-kill-process
+  bindkey '^p^k' peco-kill-process
+  #
+  # ag + peco + vim
+  #
+  if [ -x "`which ag`" ]; then
+    function agvim() {
+      vim $(ag $@ | peco --query "$LBUFFER" | awk -F : '{print "-c " $2 " " $1}')
+    }
+  fi
+  #
+  # ghq
+  #
+  function peco-ghq () {
+    local selected_dir=$(ghq list -p | peco --query "$LBUFFER")
+    if [ -n "$selected_dir" ]; then
+      BUFFER="cd ${selected_dir}"
+      zle accept-line
+    fi
+    zle clear-screen
+  }
+  zle -N peco-ghq
+  bindkey '^p^g' peco-ghq
+
+fi
+
+#-----------------------------------------------------------------
+# エイリアス設定
+#-----------------------------------------------------------------
+#alias ls='ls --color=auto'
+alias h='history -E -32'
+#alias ll='ls -ltr --color'
+#alias la='ls -laF --color'
+#alias cp='cp -irf'
+#alias mv='mv -i'
+alias vi='vim';
+
+#-----------------------------------------------------------------
+# その他設定
+#-----------------------------------------------------------------
+# Ctrl+Sによる端末ロック機能を無効
+stty stop undef
+
